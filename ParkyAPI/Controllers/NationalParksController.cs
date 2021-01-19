@@ -45,7 +45,7 @@ namespace ParkyAPI.Controllers
         /// <param name="nationalParkId"></param>
         /// <returns></returns>
         [HttpGet("{nationalParkId}", Name = "GetNationalPark")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(200, Type = typeof(NationalParkDto))]
         [ProducesResponseType(404)]
         public IActionResult GetNationalPark(int nationalParkId)
         {
