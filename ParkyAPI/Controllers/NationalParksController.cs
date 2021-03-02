@@ -11,7 +11,8 @@ using ParkyAPI.Repository.IRepository;
 
 namespace ParkyAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/nationalParks")]
     [ApiController]
     public class NationalParksController : ControllerBase
     {
@@ -91,7 +92,7 @@ namespace ParkyAPI.Controllers
                 ModelState.AddModelError("", $"something went wrong creating the record {objToBeCreated.Name}");
                 return StatusCode(500, ModelState);
             }
-            return CreatedAtRoute("GetNationalPark", new { nationalParkId = objToBeCreated.Id }, objToBeCreated);
+            return CreatedAtRoute("GetNationalPark", new {Version=HttpContext.GetRequestedApiVersion().ToString(), nationalParkId = objToBeCreated.Id }, objToBeCreated);
         }
 
         [HttpPatch("{natId}", Name = "UpdateNationalPark")]

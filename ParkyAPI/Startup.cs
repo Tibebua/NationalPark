@@ -19,6 +19,9 @@ using ParkyAPI.Repository.IRepository;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
 using System.IO;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Microsoft.Extensions.Options;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace ParkyAPI
 {
@@ -35,25 +38,43 @@ namespace ParkyAPI
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
-            services.AddSwaggerGen(c =>
+            services.AddApiVersioning(config =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo
-                {
-                    Version = "v1",
-                    Title = "National Park API",
-                    Description = "Simple national park api",
-                    Contact = new OpenApiContact
-                    {
-                        Name = "Alazar Tibebu",
-                        Email = ""
-                    }
-                });
-
-                // Set the comments path for the Swagger JSON and UI.
-                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-                c.IncludeXmlComments(xmlPath);
+                config.DefaultApiVersion = new ApiVersion(1, 0);
+                config.AssumeDefaultVersionWhenUnspecified = true;
+                config.ReportApiVersions = true;
             });
+
+            services.AddVersionedApiExplorer(config =>
+            {
+                config.GroupNameFormat = "'v'VVV";
+                config.SubstituteApiVersionInUrl = true;
+
+            });
+
+            services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
+            services.AddSwaggerGen();
+
+            //services.AddSwaggerGen(options =>
+            //{
+            //    options.SwaggerDoc("v1", new OpenApiInfo
+            //    {
+            //        Version = "v1",
+            //        Title = "National Park API",
+            //        Description = "Simple national park api",
+            //        Contact = new OpenApiContact
+            //        {
+            //            Name = "Alazar Tibebu",
+            //            Email = ""
+            //        }
+            //    });
+
+            //    // Set the comments path for the Swagger JSON and UI.
+            //    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+            //    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+            //    options.IncludeXmlComments(xmlPath);
+            //});
+
             services.AddDbContext<ApplicationDbContext>(options =>
       options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
             services.AddScoped<INationalParkRepository, NationalParkRepository>();
@@ -63,7 +84,7 @@ namespace ParkyAPI
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IApiVersionDescriptionProvider provider)
         {
             if (env.IsDevelopment())
             {
@@ -73,11 +94,21 @@ namespace ParkyAPI
             app.UseHttpsRedirection();
 
             app.UseSwagger();
-            app.UseSwaggerUI(c =>
+
+            app.UseSwaggerUI(options =>
             {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "National Park API V1");
-                c.RoutePrefix = string.Empty;
+                foreach(var desc in provider.ApiVersionDescriptions)
+                {
+                    options.SwaggerEndpoint($"/swagger/{desc.GroupName}/swagger.json", desc.GroupName.ToUpperInvariant());
+                }
+                options.RoutePrefix = string.Empty;
             });
+
+            //app.UseSwaggerUI(options =>
+            //{
+            //    options.SwaggerEndpoint("/swagger/v1/swagger.json", "National Park API V1");
+            //    options.RoutePrefix = string.Empty;
+            //});
 
             app.UseRouting();
 

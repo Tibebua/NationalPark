@@ -11,7 +11,8 @@ using ParkyAPI.Repository.IRepository;
 
 namespace ParkyAPI.Controllers
 {
-    [Route("api/[controller]")]
+    
+    [Route("api/v{version:apiVersion}/Trails")]
     [ApiController]
     public class TrailsController : ControllerBase
     {
@@ -43,7 +44,25 @@ namespace ParkyAPI.Controllers
             return Ok(objDto);
         }
 
+        [HttpGet("GetTrailsInaNationalPark/{nationalParkId}")]
+        [ProducesResponseType(200, Type = typeof(List<TrailDto>))]
+        public IActionResult GetTrailsInNationalPark(int nationalParkId)
+        {
+            var objList = _trailRepo.GetTrailsInaNationalPark(nationalParkId);
+            var trailListDto = new List<TrailDto>();
 
+            if(objList == null)
+            {
+                return NotFound();
+            }
+
+            foreach (var obj in objList)
+            {
+                trailListDto.Add(_mapper.Map<TrailDto>(obj));
+            }
+
+            return Ok(trailListDto);
+        }
 
         /// <summary>
         /// Gets a single trail
